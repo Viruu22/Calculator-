@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Scientific Calculator</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        .calculator {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+            position: relative;
+        }
+        .display {
+            width: 100%;
+            height: 80px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #00d4ff;
+            font-size: 32px;
+            text-align: right;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            font-family: 'Courier New', monospace;
+        }
+        .mode {
+            text-align: center;
+            color: #ff6b6b;
+            margin-bottom: 15px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+        }
+        button {
+            height: 60px;
+            font-size: 18px;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.4), transparent);
+            transition: left 0.5s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), inset 0 2px 0 rgba(255, 255, 255, 0.3);
+        }
+        button:active {
+            transform: translateY(0);
+            box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        button:active::before {
+            left: 100%;
+        }
+        .operator {
+            background: linear-gradient(135deg, #ff9a9e, #fecfef);
+            color: #333;
+        }
+        .clear {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+        }
+        .equals {
+            background: linear-gradient(135deg, #00d4ff, #090979);
+            grid-column: span 2;
+        }
+        .scientific {
+            background: linear-gradient(135deg, #a8edea, #fed6e3);
+            color: #333;
+        }
+        .constant {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+        .toggle {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+        .dashboard {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .section {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .section h3 {
+            color: #00d4ff;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .history {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .history ul {
+            list-style: none;
+        }
+        .history li {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .quick-functions button {
+            margin: 5px;
+            width: 100px;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+        }
+        .stat {
+            text-align: center;
+        }
+        .stat h4 {
+            font-size: 24px;
+            color: #ff6b6b;
+        }
+        @media (max-width: 768px) {
+            .calculator {
+                max-width: 100%;
+                padding: 20px;
+            }
+            .buttons {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            .equals {
+                grid-column: span 1;
+            }
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="calculator">
+            <input type="text" class="display" id="display" readonly>
+            <div class="mode" id="modeDisplay">Mode: Degrees</div>
+            <div class="buttons">
+                <button class="clear" onclick="clearDisplay()">C</button>
+                <button onclick="appendToDisplay('(')">(</button>
+                <button onclick="appendToDisplay(')')">)</button>
+                <button onclick="appendToDisplay('/')">/</button>
+                <button onclick="appendToDisplay('*')">*</button>
+                <button onclick="appendToDisplay('7')">7</button>
+                <button onclick="appendToDisplay('8')">8</button>
+                <button onclick="appendToDisplay('9')">9</button>
+                <button onclick="appendToDisplay('-')">-</button>
+                <button class="scientific" onclick="calculateFunction('sin')">sin</button>
+                <button onclick="appendToDisplay('4')">4</button>
+                <button onclick="appendToDisplay('5')">5</button>
+                <button onclick="appendToDisplay('6')">6</button>
+                <button class="operator" onclick="appendToDisplay('+')">+</button>
+                <button class="scientific" onclick="calculateFunction('cos')">cos</button>
+                <button onclick="appendToDisplay('1')">1</button>
+                <button onclick="appendToDisplay('2')">2</button>
+                <button onclick="appendToDisplay('3')">3</button>
+                <button class="scientific" onclick="calculateFunction('sqrt')">√</button>
+                <button class="scientific" onclick="calculateFunction('tan')">tan</button>
+                <button onclick="appendToDisplay('0')">0</button>
+                <button onclick="appendToDisplay('.')">.</button>
+                <button class="scientific" onclick="calculateFunction('log')">log</button>
+                <button class="scientific" onclick="calculateFunction('exp')">exp</button>
+                <button class="scientific" onclick="calculateFunction('pow')">^</button>
+                <button class="constant" onclick="appendConstant('pi')">π</button>
+                <button class="toggle" onclick="toggleMode()">Deg/Rad</button>
+                <button class="equals" onclick="calculate()">=</button>
+            </div>
+        </div>
+
+        <div class="dashboard">
+            <div class="section history">
+                <h3>Recent Calculations</h3>
+                <ul id="historyList"></ul>
+            </div>
+            <div class="section quick-functions">
+                <h3>Quick Access</h3>
+                <button onclick="appendToDisplay('Math.PI')">π</button>
+                <button onclick="appendToDisplay('Math.E')">e</button>
+                <button onclick="calculateFunction('sqrt')">√</button>
+                <button onclick="calculateFunction('pow')">^</button>
+            </div>
+            <div class="section graph">
+                <h3>Calculation Trends</h3>
+                <canvas id="trendChart"></canvas>
+            </div>
+            <div class="section stats">
+                <div class="stat">
+                    <h4 id="calcCount">0</h4>
+                    <p>Total Calculations</p>
+                </div>
+                <div class="stat">
+                    <h4 id="avgResult">0</h4>
+                    <p>Average Result</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let display = document.getElementById('display');
+        let modeDisplay = document.getElementById('modeDisplay');
+        let historyList = document.getElementById('historyList');
+        let calcCount = document.getElementById('calcCount');
+        let avgResult = document.getElementById('avgResult');
+        let currentInput = '';
+        let isDegrees = true;
+        let calculations = [];
+        let results = [];
+
+        function appendToDisplay(value) {
+            currentInput += value;
+            display.value = currentInput;
+            display.style.transform = 'scale(1.02)';
+            setTimeout(() => display.style.transform = 'scale(1)', 100);
+        }
+
+        function appendConstant(constant) {
+            if (constant === 'pi') {
+                appendToDisplay(Math.PI.toString());
+            }
+        }
+
+        function clearDisplay() {
+            currentInput = '';
+            display.value = '';
+        }
+
+        function toggleMode() {
+            isDegrees = !isDegrees;
+            modeDisplay.textContent = isDegrees ? 'Mode: Degrees' : 'Mode: Radians';
+        }
+
+        function calculateFunction(func) {
+            let num = parseFloat(currentInput);
+            if (isNaN(num)) {
+                display.value = 'Error';
+                currentInput = '';
+                return;
+            }
+            let angle = isDegrees ? num * Math.PI / 180 : num;
+            switch (func) {
+                case 'sin':
+                    currentInput = Math.sin(angle).toString();
+                    break;
+                case 'cos':
+                    currentInput = Math.cos(angle).toString();
+                    break;
+                case 'tan':
+                    currentInput = Math.tan(angle).toString();
+                    break;
+                case 'sqrt':
+                    currentInput = Math.sqrt(num).toString();
+                    break;
+                case 'log':
+                    currentInput = Math.log10(num).toString();
+                    break;
+                case 'exp':
+                    currentInput = Math.exp(num).toString();
+                    break;
+                case 'pow':
+                    let parts = currentInput.split('^');
+                    if (parts.length === 2) {
+                        let base = parseFloat(parts[0]);
+                        let exp = parseFloat(parts[1]);
+                        currentInput = Math.pow(base, exp).toString();
+                    } else {
+                        display.value = 'Error';
+                        currentInput = '';
+                        return;
+                    }
+                    break;
+            }
+            display.value = currentInput;
+        }
+
+        function calculate() {
+            try {
+                let result = eval(currentInput);
+                display.value = result;
+                calculations.push(currentInput + ' = ' + result);
+                results.push(result);
+                updateHistory();
+                updateStats();
+                currentInput = result.toString();
+            } catch (error) {
+                display.value = 'Error';
+                currentInput = '';
+            }
+        }
+
+        function updateHistory() {
+            historyList.innerHTML = '';
+            calculations.slice(-10).forEach(calc => {
+                let li = document.createElement('li');
+                li.textContent = calc;
+                historyList.appendChild(li);
+            });
+        }
+
+        function updateStats() {
+            calcCount.textContent = calculations.length;
+            if (results.length > 0) {
+                let avg = results.reduce((a, b) => a + b, 0) / results.length;
+                avgResult.textContent = avg.toFixed(2);
+            }
+        }
+
+        // Simple chart for trends (last 10 results)
+        const ctx = document.getElementById('trendChart').getContext('2d');
+        const trendChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array.from({length: 10}, (_, i) => i + 1),
+                datasets: [{
+                    label: 'Results',
+                    data: [],
+                    borderColor: '#00d4ff',
+                    backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        function updateChart() {
+            trendChart.data.datasets[0].data = results.slice(-10);
+            trendChart.update();
+        }
+
+        // Update chart on calculation
+        const originalCalculate = calculate;
+        calculate = function() {
+            originalCalculate();
+            updateChart();
+        };
+    </script>
+</body>
+</html>
